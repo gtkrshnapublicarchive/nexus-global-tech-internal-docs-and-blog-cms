@@ -2,17 +2,7 @@
 
 import Image from "next/image";
 import { CodeBlockCopyEnhancer } from "@/shared/ui/code_block_copy_enhancer";
-import { ArticleChangelog } from "./article_changelog";
-
-interface ArticleRevisionItem {
-  id: string;
-  versionNumber: number;
-  changeSummary: string;
-  createdAt: Date;
-  editor: {
-    name: string;
-  };
-}
+import { ArticleChangelog, ArticleRevisionItem } from "./article_changelog";
 
 interface ArticleContentViewProps {
   title: string;

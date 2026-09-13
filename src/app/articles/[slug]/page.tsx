@@ -51,13 +51,6 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       },
       department: true,
       revisions: {
-        include: {
-          editor: {
-            select: {
-              name: true,
-            },
-          },
-        },
         orderBy: {
           createdAt: "desc",
         },
