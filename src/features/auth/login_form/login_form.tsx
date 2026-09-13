@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Shield, ArrowRight, Lock, Mail, AlertCircle } from "lucide-react";
+import { Shield, ArrowRight, Lock, Mail } from "lucide-react";
+import { FeedbackAlert } from "@/shared/ui/feedback_alert";
 
 export function LoginForm() {
   const router = useRouter();
@@ -59,10 +60,13 @@ export function LoginForm() {
         </div>
 
         {error && (
-          <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/70 p-3 text-xs text-red-700">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
-            <span>{error}</span>
-          </div>
+          <FeedbackAlert
+            type="error"
+            title="Authentication Error"
+            message={error}
+            onDismiss={() => setError(null)}
+            className="mb-5"
+          />
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
