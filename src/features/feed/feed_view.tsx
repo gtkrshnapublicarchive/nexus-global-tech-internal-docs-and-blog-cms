@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Pin, Clock, ArrowUpRight, FileText } from "lucide-react";
+import Image from "next/image";
+import { Search, Pin, Clock, ArrowUpRight, FileText, Sparkles, Layers, Users } from "lucide-react";
 import { FeedArticleItem, DepartmentFilterItem } from "./feed_types";
 import { BookmarkButton } from "./bookmark_button";
 
@@ -40,32 +41,68 @@ export function FeedView({ articles, departments }: FeedViewProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
-      {/* Header & Search */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between border-b border-black/8 pb-8">
-        <div className="space-y-2 max-w-xl">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5a8357]">
-            Nexus Internal Repository
-          </span>
-          <h1 className="font-['Fraunces'] text-3xl font-medium tracking-tight text-[#20211f] sm:text-4xl">
-            Engineering Knowledge & RFCs
-          </h1>
-          <p className="text-sm leading-relaxed text-[#626760]">
-            Centralized technical guides, system post-mortems, and architectural decision records for Nexus Global Tech staff.
-          </p>
-        </div>
+      {/* Landing Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl border border-black/8 bg-white p-6 sm:p-10 shadow-sm">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#e7f2e4] px-3 py-1 text-xs font-semibold text-[#4c7649]">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Nexus Global Tech - Internal Engineering Hub</span>
+            </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3.5 top-3 h-4 w-4 text-[#81857e]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search guides, RFCs, authors..."
-            className="w-full rounded-xl border border-black/10 bg-white py-2.5 pl-10 pr-4 text-sm text-[#20211f] placeholder:text-[#81857e] shadow-sm focus:border-[#668c63] focus:outline-none focus:ring-2 focus:ring-[#668c63]/20"
-          />
+            <h1 className="font-['Fraunces'] text-3xl font-medium tracking-tight text-[#20211f] sm:text-5xl leading-tight">
+              Centralized Architectural Knowledge & RFCs
+            </h1>
+
+            <p className="text-sm leading-relaxed text-[#626760] max-w-xl">
+              The single source of truth for 200 software engineers across Aurelia City. Discover operational runbooks, system incident post-mortems, and architectural decision records.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex items-center gap-2 rounded-xl bg-[#fbfbfa] border border-black/6 px-3 py-1.5 text-xs text-[#20211f]">
+                <Users className="h-3.5 w-3.5 text-[#5a8357]" />
+                <span className="font-semibold">200 Active Staff</span>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl bg-[#fbfbfa] border border-black/6 px-3 py-1.5 text-xs text-[#20211f]">
+                <Layers className="h-3.5 w-3.5 text-[#5a8357]" />
+                <span className="font-semibold">4 Departments</span>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl bg-[#fbfbfa] border border-black/6 px-3 py-1.5 text-xs text-[#20211f]">
+                <Clock className="h-3.5 w-3.5 text-[#5a8357]" />
+                <span className="font-semibold">Weekly RFC Cadence</span>
+              </div>
+            </div>
+
+            {/* Quick Search Bar */}
+            <div className="pt-2">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3.5 top-3 h-4 w-4 text-[#81857e]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search guides, RFCs, authors, topics..."
+                  className="w-full rounded-xl border border-black/10 bg-[#fbfbfa] py-2.5 pl-10 pr-4 text-sm text-[#20211f] placeholder:text-[#81857e] shadow-sm focus:border-[#668c63] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#668c63]/20"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5">
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-black/8 bg-[#fbfbfa] shadow-sm">
+              <Image
+                src="/images/nexus_hero_banner.jpg"
+                alt="Nexus Global Tech Architecture Network"
+                fill
+                priority
+                className="object-cover transition duration-300 hover:scale-105"
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Pinned Announcements Banner (Max 2 enforced) */}
       {pinnedArticles.length > 0 && selectedDept === "all" && !searchQuery && (
@@ -77,55 +114,70 @@ export function FeedView({ articles, departments }: FeedViewProps) {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {pinnedArticles.map((item) => (
               <div
                 key={item.id}
-                className="relative flex flex-col justify-between rounded-2xl border border-black/8 bg-[#eef2ec]/60 p-6 transition hover:border-[#668c63] hover:shadow-sm"
+                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-black/8 bg-white shadow-sm transition hover:border-[#668c63] hover:shadow-md"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e7f2e4] px-2.5 py-0.5 text-[11px] font-semibold text-[#4c7649]">
-                      <Pin className="h-3 w-3" />
-                      Pinned Announcement
-                    </span>
+                <div className="relative aspect-video w-full overflow-hidden bg-[#fbfbfa]">
+                  <Image
+                    src={item.coverImageUrl || "/images/architecture_cover.jpg"}
+                    alt={item.title}
+                    fill
+                    className="object-cover transition duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 right-3 z-10">
                     <BookmarkButton
                       articleId={item.id}
                       initialBookmarked={item.isBookmarked}
                       size="sm"
                     />
                   </div>
-
-                  <Link href={`/articles/${item.slug}`} className="block group">
-                    <h3 className="font-['Fraunces'] text-xl font-medium tracking-tight text-[#20211f] group-hover:text-[#5a8357] transition">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-xs leading-relaxed text-[#626760] line-clamp-2">
-                      {item.excerpt}
-                    </p>
-                  </Link>
+                  <div className="absolute bottom-3 left-3 z-10">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/95 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-semibold text-[#4c7649] shadow-sm">
+                      <Pin className="h-3 w-3" />
+                      Pinned Announcement
+                    </span>
+                  </div>
                 </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-black/6 pt-4 text-[11px] text-[#737870]">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[#20211f]">
-                      {item.author.name}
+                <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a8357]">
+                      {item.department.name}
                     </span>
-                    <span>•</span>
-                    <span>{item.department.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {item.readTimeMinutes} min read
-                    </span>
-                    <Link
-                      href={`/articles/${item.slug}`}
-                      className="inline-flex items-center gap-0.5 font-semibold text-[#252724] hover:underline"
-                    >
-                      <span>Read</span>
-                      <ArrowUpRight className="h-3 w-3" />
+                    <Link href={`/articles/${item.slug}`} className="block mt-1">
+                      <h3 className="font-['Fraunces'] text-xl font-medium tracking-tight text-[#20211f] group-hover:text-[#5a8357] transition">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-[#626760] line-clamp-2">
+                        {item.excerpt}
+                      </p>
                     </Link>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between border-t border-black/6 pt-4 text-[11px] text-[#737870]">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-[#20211f]">
+                        {item.author.name}
+                      </span>
+                      <span>•</span>
+                      <span>{item.department.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {item.readTimeMinutes} min read
+                      </span>
+                      <Link
+                        href={`/articles/${item.slug}`}
+                        className="inline-flex items-center gap-0.5 font-semibold text-[#252724] hover:underline"
+                      >
+                        <span>Read</span>
+                        <ArrowUpRight className="h-3 w-3" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -190,21 +242,31 @@ export function FeedView({ articles, departments }: FeedViewProps) {
             {filteredArticles.map((article) => (
               <article
                 key={article.id}
-                className="flex flex-col justify-between rounded-2xl border border-black/8 bg-white p-6 shadow-sm transition hover:border-black/16 hover:shadow-md"
+                className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-black/8 bg-white shadow-sm transition hover:border-black/16 hover:shadow-md"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="rounded-lg bg-[#eef2ec] px-2.5 py-1 text-[11px] font-semibold text-[#596057]">
-                      {article.department.name}
-                    </span>
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#fbfbfa]">
+                  <Image
+                    src={article.coverImageUrl || "/images/architecture_cover.jpg"}
+                    alt={article.title}
+                    fill
+                    className="object-cover transition duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 right-3 z-10">
                     <BookmarkButton
                       articleId={article.id}
                       initialBookmarked={article.isBookmarked}
                       size="sm"
                     />
                   </div>
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="rounded-lg bg-white/95 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-[#596057] shadow-sm">
+                      {article.department.name}
+                    </span>
+                  </div>
+                </div>
 
-                  <Link href={`/articles/${article.slug}`} className="block group">
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-3">
+                  <Link href={`/articles/${article.slug}`} className="block">
                     <h3 className="font-['Fraunces'] text-lg font-medium leading-snug tracking-tight text-[#20211f] group-hover:text-[#5a8357] transition">
                       {article.title}
                     </h3>
@@ -212,27 +274,27 @@ export function FeedView({ articles, departments }: FeedViewProps) {
                       {article.excerpt}
                     </p>
                   </Link>
-                </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-black/6 pt-4 text-[11px] text-[#737870]">
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-[#20211f]">
-                      {article.author.name}
-                    </span>
-                    <span>
-                      {article.publishedAt
-                        ? new Date(article.publishedAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "Draft"}
-                    </span>
-                  </div>
+                  <div className="mt-6 flex items-center justify-between border-t border-black/6 pt-4 text-[11px] text-[#737870]">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-[#20211f]">
+                        {article.author.name}
+                      </span>
+                      <span>
+                        {article.publishedAt
+                          ? new Date(article.publishedAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : "Draft"}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{article.readTimeMinutes} min</span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{article.readTimeMinutes} min</span>
+                    </div>
                   </div>
                 </div>
               </article>

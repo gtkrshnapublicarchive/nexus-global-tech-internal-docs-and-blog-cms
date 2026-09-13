@@ -84,9 +84,11 @@ async function main() {
     where: { slug: "rfc-104-event-driven-microservices-standards" },
     update: {
       title: "RFC-104: Event-Driven Microservices Standards Across Aurelia Clusters",
+      coverImageUrl: "/images/architecture_cover.jpg",
       isPinned: true,
       pinnedAt: new Date("2026-09-10T08:00:00Z"),
       status: ArticleStatus.PUBLISHED,
+      publishedAt: new Date("2026-09-10T08:30:00Z"),
     },
     create: {
       title: "RFC-104: Event-Driven Microservices Standards Across Aurelia Clusters",
@@ -119,7 +121,7 @@ export async function processEvent(event: DomainEvent<unknown>) {
 
 ### Schema Registry Compatibility
 All event payloads are strictly governed by JSON Schema specifications version 7. Backward compatibility must be preserved across minor revisions.`,
-      coverImageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&auto=format&fit=crop&q=80",
+      coverImageUrl: "/images/architecture_cover.jpg",
       status: ArticleStatus.PUBLISHED,
       isPinned: true,
       pinnedAt: new Date("2026-09-10T08:00:00Z"),
@@ -135,6 +137,7 @@ All event payloads are strictly governed by JSON Schema specifications version 7
     where: { slug: "post-mortem-cache-invalidation-storm" },
     update: {
       title: "Post-Mortem: Incident 2026-08-22 Distributed Cache Invalidation Storm",
+      coverImageUrl: "/images/postmortem_cover.jpg",
       isPinned: true,
       pinnedAt: new Date("2026-09-11T10:00:00Z"),
       status: ArticleStatus.PUBLISHED,
@@ -163,7 +166,7 @@ func PurgeKeys(keys []string) error {
 1. Replaced synchronous key purges with asynchronous Redis \`UNLINK\` worker queues.
 2. Introduced jitter (5% to 15%) across all cache TTL expiration timestamps.
 3. Added circuit breakers preventing database read spikes during cold restarts.`,
-      coverImageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80",
+      coverImageUrl: "/images/postmortem_cover.jpg",
       status: ArticleStatus.PUBLISHED,
       isPinned: true,
       pinnedAt: new Date("2026-09-11T10:00:00Z"),
@@ -177,7 +180,9 @@ func PurgeKeys(keys []string) error {
 
   await prisma.article.upsert({
     where: { slug: "nexus-engineering-onboarding-sop" },
-    update: {},
+    update: {
+      coverImageUrl: "/images/onboarding_cover.jpg",
+    },
     create: {
       title: "Nexus Engineering Onboarding: Local Stack and Secret Vaults",
       slug: "nexus-engineering-onboarding-sop",
@@ -201,7 +206,7 @@ nexus-cli vault sync --env development
 
 ### Architecture Review Schedule
 Weekly RFC review calls take place every Thursday at 14:00 local time.`,
-      coverImageUrl: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&auto=format&fit=crop&q=80",
+      coverImageUrl: "/images/onboarding_cover.jpg",
       status: ArticleStatus.PUBLISHED,
       isPinned: false,
       readTimeMinutes: 3,
@@ -214,7 +219,9 @@ Weekly RFC review calls take place every Thursday at 14:00 local time.`,
 
   await prisma.article.upsert({
     where: { slug: "design-system-warm-editorial-tokens" },
-    update: {},
+    update: {
+      coverImageUrl: "/images/nexus_hero_banner.jpg",
+    },
     create: {
       title: "Design System 2026: Warm Editorial Tokens & Typography Rules",
       slug: "design-system-warm-editorial-tokens",
@@ -230,7 +237,7 @@ Our internal interfaces adhere strictly to the Warm Editorial Light design speci
 
 ### Typography Pairing
 Headings utilize **Fraunces** serif, paired with **Geist** or **DM Sans** for all body copy and controls.`,
-      coverImageUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=1200&auto=format&fit=crop&q=80",
+      coverImageUrl: "/images/nexus_hero_banner.jpg",
       status: ArticleStatus.PUBLISHED,
       isPinned: false,
       readTimeMinutes: 3,
