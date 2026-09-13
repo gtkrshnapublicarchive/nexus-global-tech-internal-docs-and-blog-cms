@@ -20,7 +20,7 @@ export default async function FeedPage() {
   const userId = session.user.id;
 
   // Anti-Pattern 1: Strictly query only PUBLISHED articles for the reader feed
-  const [articles, departments, userBookmarks] = await Promise.all([
+  const [articles, departments, userBookmarks, topAuthors] = await Promise.all([
     db.article.findMany({
       where: {
         status: ArticleStatus.PUBLISHED,
@@ -35,6 +35,10 @@ export default async function FeedPage() {
         slug: true,
         excerpt: true,
         coverImageUrl: true,
+        documentType: true,
+        aurumBounty: true,
+        lastVerifiedAt: true,
+        verifiedBy: true,
         isPinned: true,
         readTimeMinutes: true,
         wordCount: true,
@@ -43,6 +47,7 @@ export default async function FeedPage() {
           select: {
             name: true,
             department: true,
+            aurumBalance: true,
           },
         },
         department: {
@@ -72,6 +77,23 @@ export default async function FeedPage() {
       where: { userId },
       select: { articleId: true },
     }),
+    db.user.findMany({
+      take: 4,
+      orderBy: { aurumBalance: "desc" },
+      select: {
+        id: true,
+        name: true,
+        department: true,
+        aurumBalance: true,
+        _count: {
+          select: {
+            articles: {
+              where: { status: ArticleStatus.PUBLISHED },
+            },
+          },
+        },
+      },
+    }),
   ]);
 
   const bookmarkSet = new Set(userBookmarks.map((b) => b.articleId));
@@ -82,6 +104,10 @@ export default async function FeedPage() {
     slug: a.slug,
     excerpt: a.excerpt,
     coverImageUrl: a.coverImageUrl,
+    documentType: a.documentType,
+    aurumBounty: a.aurumBounty,
+    lastVerifiedAt: a.lastVerifiedAt ? a.lastVerifiedAt.toISOString() : null,
+    verifiedBy: a.verifiedBy,
     isPinned: a.isPinned,
     readTimeMinutes: a.readTimeMinutes,
     wordCount: a.wordCount,
@@ -98,11 +124,23 @@ export default async function FeedPage() {
     count: d._count.articles,
   }));
 
+  const leaderboard = topAuthors.map((author) => ({
+    id: author.id,
+    name: author.name,
+    department: author.department,
+    aurumBalance: author.aurumBalance,
+    articleCount: author._count.articles,
+  }));
+
   return (
     <div className="min-h-screen bg-[#fbfbfa]">
       <Navbar user={session.user} />
       <main>
-        <FeedView articles={feedArticles} departments={deptFilters} />
+        <FeedView
+          articles={feedArticles}
+          departments={deptFilters}
+          leaderboard={leaderboard}
+        />
       </main>
     </div>
   );

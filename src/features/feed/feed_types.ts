@@ -4,6 +4,10 @@ export interface FeedArticleItem {
   slug: string;
   excerpt: string;
   coverImageUrl: string | null;
+  documentType: "RFC" | "ADR" | "POST_MORTEM" | "RUNBOOK" | "ONBOARDING" | "STANDARD";
+  aurumBounty: number;
+  lastVerifiedAt: string | null;
+  verifiedBy: string | null;
   department: {
     name: string;
     slug: string;
@@ -11,6 +15,7 @@ export interface FeedArticleItem {
   author: {
     name: string;
     department: string;
+    aurumBalance?: number;
   };
   isPinned: boolean;
   readTimeMinutes: number;
@@ -24,4 +29,12 @@ export interface DepartmentFilterItem {
   name: string;
   slug: string;
   count: number;
+}
+
+export interface AuthorBountyLeaderboardItem {
+  id: string;
+  name: string;
+  department: string;
+  aurumBalance: number;
+  articleCount: number;
 }
