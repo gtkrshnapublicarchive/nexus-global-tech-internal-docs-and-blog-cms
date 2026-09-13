@@ -19,31 +19,52 @@ function slugify(text: string): string {
 export async function saveArticleAction(formData: unknown) {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error("Authentication required.");
+    return {
+      success: false,
+      error: "Authentication required to perform this action.",
+    };
   }
 
   // Anti-Pattern 1 & 2: Authoring Studio restricted exclusively to Editor role
   if (session.user.role !== "EDITOR") {
-    throw new Error("Unauthorized: Authoring privileges required.");
+    return {
+      success: false,
+      error: "Unauthorized: Authoring privileges required.",
+    };
   }
 
   const rawData = formData as Record<string, unknown>;
   const isUpdate = !!rawData.id;
 
   if (isUpdate) {
-    const validated = UpdateArticleSchema.parse(rawData);
+    const parseResult = UpdateArticleSchema.safeParse(rawData);
+    if (!parseResult.success) {
+      const issues = parseResult.error.issues.map((i) => ({
+        field: i.path.join("."),
+        message: i.message,
+      }));
+      return {
+        success: false,
+        error: "Please review and correct the marked items before updating.",
+        issues,
+      };
+    }
+    const validated = parseResult.data;
     const existing = await db.article.findUnique({
       where: { id: validated.id },
       select: { authorId: true, isPinned: true },
     });
 
     if (!existing) {
-      throw new Error("Article not found.");
+      return { success: false, error: "Article not found." };
     }
 
     // Anti-IDOR check
     if (session.user.role !== "EDITOR" && existing.authorId !== session.user.id) {
-      throw new Error("Forbidden: You do not own this article.");
+      return {
+        success: false,
+        error: "Forbidden: You do not have permission to modify this article.",
+      };
     }
 
     const { minutes, wordCount } = calculateReadTime(validated.content ?? "");
@@ -114,7 +135,19 @@ export async function saveArticleAction(formData: unknown) {
   }
 
   // Create Flow
-  const validated = CreateArticleSchema.parse(rawData);
+  const parseResult = CreateArticleSchema.safeParse(rawData);
+  if (!parseResult.success) {
+    const issues = parseResult.error.issues.map((i) => ({
+      field: i.path.join("."),
+      message: i.message,
+    }));
+    return {
+      success: false,
+      error: "Please review and correct the marked items before saving.",
+      issues,
+    };
+  }
+  const validated = parseResult.data;
   const baseSlug = slugify(validated.title);
   let finalSlug = baseSlug;
   let counter = 1;
