@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Role, ArticleStatus } from "@prisma/client";
+import { Role, ArticleStatus, DocumentType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { db as prisma } from "../src/core/database/db";
 
@@ -48,6 +48,7 @@ async function main() {
       role: Role.EDITOR,
       department: "Engineering",
       password: hashedPassword,
+      aurumBalance: 450,
     },
     create: {
       name: "Marcus Aurelius",
@@ -55,6 +56,7 @@ async function main() {
       password: hashedPassword,
       role: Role.EDITOR,
       department: "Engineering",
+      aurumBalance: 450,
     },
   });
 
@@ -65,6 +67,7 @@ async function main() {
       role: Role.READER,
       department: "Engineering",
       password: hashedPassword,
+      aurumBalance: 150,
     },
     create: {
       name: "Nadia Chen",
@@ -72,6 +75,7 @@ async function main() {
       password: hashedPassword,
       role: Role.READER,
       department: "Engineering",
+      aurumBalance: 150,
     },
   });
 
@@ -533,6 +537,148 @@ This working draft evaluates embedding indexing strategies for the Nexus documen
       userId: nadia.id,
       articleId: articleDbMigration.id,
     },
+  });
+
+  // 5. Update Document Types, Freshness & Bounties
+  await prisma.article.update({
+    where: { slug: "rfc-104-event-driven-microservices-standards" },
+    data: {
+      documentType: DocumentType.RFC,
+      verifiedBy: "Systems Architecture Committee",
+      aurumBounty: 150,
+      lastVerifiedAt: new Date("2026-09-10T08:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "post-mortem-cache-invalidation-storm" },
+    data: {
+      documentType: DocumentType.POST_MORTEM,
+      verifiedBy: "Reliability & SRE Taskforce",
+      aurumBounty: 200,
+      lastVerifiedAt: new Date("2026-09-11T10:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "nexus-engineering-onboarding-sop" },
+    data: {
+      documentType: DocumentType.ONBOARDING,
+      verifiedBy: "Engineering Enablement Guild",
+      aurumBounty: 100,
+      lastVerifiedAt: new Date("2026-09-01T09:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "design-system-warm-editorial-tokens" },
+    data: {
+      documentType: DocumentType.STANDARD,
+      verifiedBy: "Design Systems Guild",
+      aurumBounty: 100,
+      lastVerifiedAt: new Date("2026-09-02T16:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "zero-downtime-database-migrations-runbook" },
+    data: {
+      documentType: DocumentType.RUNBOOK,
+      verifiedBy: "Data Platform Guild",
+      aurumBounty: 120,
+      lastVerifiedAt: new Date("2026-09-05T14:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "rfc-107-envoy-ingress-rate-limiting" },
+    data: {
+      documentType: DocumentType.RFC,
+      verifiedBy: "Core Services Guild",
+      aurumBounty: 150,
+      lastVerifiedAt: new Date("2026-09-08T11:00:00Z"),
+    },
+  });
+
+  // Stale notice demonstration (>180 days old verification date)
+  await prisma.article.update({
+    where: { slug: "q4-engineering-security-audit-report" },
+    data: {
+      documentType: DocumentType.RUNBOOK,
+      verifiedBy: "Information Security",
+      aurumBounty: 150,
+      lastVerifiedAt: new Date("2026-01-15T09:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "q4-product-discovery-matrix-and-prioritization" },
+    data: {
+      documentType: DocumentType.STANDARD,
+      verifiedBy: "Product Operations",
+      aurumBounty: 100,
+      lastVerifiedAt: new Date("2026-09-09T10:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "rfc-108-opentelemetry-collector-pipeline" },
+    data: {
+      documentType: DocumentType.RFC,
+      verifiedBy: "Observability Guild",
+      aurumBounty: 150,
+      lastVerifiedAt: new Date("2026-09-11T12:00:00Z"),
+    },
+  });
+
+  await prisma.article.update({
+    where: { slug: "draft-vector-embeddings-code-search" },
+    data: {
+      documentType: DocumentType.RFC,
+      aurumBounty: 150,
+    },
+  });
+
+  // 6. Seed Document Revision Logs
+  await prisma.articleRevision.deleteMany({});
+  await prisma.articleRevision.createMany({
+    data: [
+      {
+        articleId: article1.id,
+        version: "v1.0",
+        summary: "Initial RFC proposal submitted for cluster architecture review",
+        authorName: "Marcus Aurelius",
+        createdAt: new Date("2026-09-08T10:00:00Z"),
+      },
+      {
+        articleId: article1.id,
+        version: "v1.1",
+        summary: "Updated Redis idempotency key TTL from 12 hours to 24 hours and partitioned Kafka topics",
+        authorName: "Marcus Aurelius",
+        createdAt: new Date("2026-09-10T08:30:00Z"),
+      },
+      {
+        articleId: article1.id,
+        version: "v1.2",
+        summary: "Finalized Kafka cluster consumer partition configuration and dead-letter queues",
+        authorName: "Marcus Aurelius",
+        createdAt: new Date("2026-09-11T12:00:00Z"),
+      },
+      {
+        articleId: articleDbMigration.id,
+        version: "v1.0",
+        summary: "Initial operational runbook for dual-write PostgreSQL index creation",
+        authorName: "Marcus Aurelius",
+        createdAt: new Date("2026-09-03T11:00:00Z"),
+      },
+      {
+        articleId: articleDbMigration.id,
+        version: "v1.1",
+        summary: "Added lock_timeout and statement_timeout safeguards for busy production tables",
+        authorName: "Marcus Aurelius",
+        createdAt: new Date("2026-09-05T14:00:00Z"),
+      },
+    ],
   });
 
   console.log("[OK] Database seed completed successfully.");
