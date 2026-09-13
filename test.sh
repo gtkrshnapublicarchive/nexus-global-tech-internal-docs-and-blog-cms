@@ -20,6 +20,9 @@ npm run build
 echo "[*] Step 5: Running PRD domain & anti-pattern test assertions..."
 npx tsx scripts/test_e2e_workflow.ts
 
+echo "[*] Step 6: Verifying error parsing & formatting..."
+npx tsx scripts/test_error_formatting.ts
+
 echo "=================================================="
 echo "[OK] All verification checks passed cleanly."
 echo "=================================================="
