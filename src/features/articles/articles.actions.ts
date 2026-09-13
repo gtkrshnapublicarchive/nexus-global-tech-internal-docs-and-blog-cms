@@ -5,7 +5,23 @@ import { auth } from "@/core/auth/auth";
 import { db } from "@/core/database/db";
 import { calculateReadTime } from "@/shared/lib/read_time";
 import { CreateArticleSchema, UpdateArticleSchema } from "./articles.dto";
-import { ArticleStatus } from "@prisma/client";
+import { ArticleStatus, DocumentType } from "@prisma/client";
+
+function getBountyForDocumentType(type?: string): number {
+  switch (type) {
+    case "POST_MORTEM":
+      return 200;
+    case "RFC":
+    case "ADR":
+      return 150;
+    case "RUNBOOK":
+      return 120;
+    case "ONBOARDING":
+      return 100;
+    default:
+      return 50;
+  }
+}
 
 function slugify(text: string): string {
   return text
@@ -69,7 +85,26 @@ export async function saveArticleAction(formData: unknown) {
 
     const { minutes, wordCount } = calculateReadTime(validated.content ?? "");
 
-    // Anti-Pattern 4: Enforce max 2 pinned invariant
+    const docType = (validated.documentType as DocumentType) || undefined;
+    const bounty = docType ? getBountyForDocumentType(docType) : undefined;
+
+    const baseUpdateData = {
+      title: validated.title,
+      excerpt: validated.excerpt,
+      content: validated.content,
+      departmentId: validated.departmentId,
+      documentType: docType,
+      aurumBounty: bounty,
+      coverImageUrl: validated.coverImageUrl || null,
+      status: validated.status as ArticleStatus,
+      readTimeMinutes: minutes,
+      wordCount,
+      lastVerifiedAt: new Date(),
+      verifiedBy: session.user.name || "Staff Editor",
+      publishedAt:
+        validated.status === "PUBLISHED" ? new Date() : undefined,
+    };
+
     if (validated.isPinned && !existing.isPinned) {
       await db.$transaction(async (tx) => {
         const pinnedCount = await tx.article.count({
@@ -94,18 +129,9 @@ export async function saveArticleAction(formData: unknown) {
         await tx.article.update({
           where: { id: validated.id },
           data: {
-            title: validated.title,
-            excerpt: validated.excerpt,
-            content: validated.content,
-            departmentId: validated.departmentId,
-            coverImageUrl: validated.coverImageUrl || null,
-            status: validated.status as ArticleStatus,
+            ...baseUpdateData,
             isPinned: true,
             pinnedAt: new Date(),
-            readTimeMinutes: minutes,
-            wordCount,
-            publishedAt:
-              validated.status === "PUBLISHED" ? new Date() : undefined,
           },
         });
       });
@@ -113,18 +139,23 @@ export async function saveArticleAction(formData: unknown) {
       await db.article.update({
         where: { id: validated.id },
         data: {
-          title: validated.title,
-          excerpt: validated.excerpt,
-          content: validated.content,
-          departmentId: validated.departmentId,
-          coverImageUrl: validated.coverImageUrl || null,
-          status: validated.status as ArticleStatus,
+          ...baseUpdateData,
           isPinned: validated.isPinned ?? existing.isPinned,
           pinnedAt: validated.isPinned ? new Date() : null,
-          readTimeMinutes: minutes,
-          wordCount,
-          publishedAt:
-            validated.status === "PUBLISHED" ? new Date() : undefined,
+        },
+      });
+    }
+
+    if (validated.revisionSummary) {
+      const revCount = await db.articleRevision.count({
+        where: { articleId: validated.id },
+      });
+      await db.articleRevision.create({
+        data: {
+          articleId: validated.id,
+          version: `v1.${revCount + 1}`,
+          summary: validated.revisionSummary,
+          authorName: session.user.name || "Staff Contributor",
         },
       });
     }
@@ -177,28 +208,42 @@ export async function saveArticleAction(formData: unknown) {
         }
       }
 
+      const bounty = getBountyForDocumentType(validated.documentType);
+      const docType = (validated.documentType as DocumentType) || DocumentType.STANDARD;
+
+      const baseCreateData = {
+        title: validated.title,
+        slug: finalSlug,
+        excerpt: validated.excerpt,
+        content: validated.content,
+        departmentId: validated.departmentId,
+        documentType: docType,
+        aurumBounty: bounty,
+        lastVerifiedAt: new Date(),
+        verifiedBy: session.user.name || "Staff Contributor",
+        coverImageUrl: validated.coverImageUrl || null,
+        status: validated.status as ArticleStatus,
+        readTimeMinutes: minutes,
+        wordCount,
+        authorId: session.user.id,
+        publishedAt:
+          validated.status === "PUBLISHED" ? new Date() : null,
+      };
+
       const created = await tx.article.create({
         data: {
-          title: validated.title,
-          slug: finalSlug,
-          excerpt: validated.excerpt,
-          content: validated.content,
-          departmentId: validated.departmentId,
-          coverImageUrl: validated.coverImageUrl || null,
-          status: validated.status as ArticleStatus,
+          ...baseCreateData,
           isPinned: true,
           pinnedAt: new Date(),
-          readTimeMinutes: minutes,
-          wordCount,
-          authorId: session.user.id,
-          publishedAt:
-            validated.status === "PUBLISHED" ? new Date() : null,
         },
         select: { id: true },
       });
       newArticleId = created.id;
     });
   } else {
+    const bounty = getBountyForDocumentType(validated.documentType);
+    const docType = (validated.documentType as DocumentType) || DocumentType.STANDARD;
+
     const created = await db.article.create({
       data: {
         title: validated.title,
@@ -206,6 +251,10 @@ export async function saveArticleAction(formData: unknown) {
         excerpt: validated.excerpt,
         content: validated.content,
         departmentId: validated.departmentId,
+        documentType: docType,
+        aurumBounty: bounty,
+        lastVerifiedAt: new Date(),
+        verifiedBy: session.user.name || "Staff Contributor",
         coverImageUrl: validated.coverImageUrl || null,
         status: validated.status as ArticleStatus,
         isPinned: false,
@@ -217,6 +266,25 @@ export async function saveArticleAction(formData: unknown) {
       select: { id: true },
     });
     newArticleId = created.id;
+  }
+
+  if (validated.revisionSummary) {
+    await db.articleRevision.create({
+      data: {
+        articleId: newArticleId,
+        version: "v1.0",
+        summary: validated.revisionSummary,
+        authorName: session.user.name || "Staff Contributor",
+      },
+    });
+  }
+
+  if (validated.status === "PUBLISHED") {
+    const bounty = getBountyForDocumentType(validated.documentType);
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { aurumBalance: { increment: bounty } },
+    });
   }
 
   revalidatePath("/feed");
@@ -300,5 +368,25 @@ export async function deleteArticleAction(articleId: string) {
 
   revalidatePath("/feed");
   revalidatePath("/editor");
+  return { success: true };
+}
+
+export async function reverifyArticleAction(articleId: string) {
+  const session = await auth();
+  if (session?.user?.role !== "EDITOR") {
+    return { success: false, error: "Unauthorized: Editorial privileges required." };
+  }
+
+  await db.article.update({
+    where: { id: articleId },
+    data: {
+      lastVerifiedAt: new Date(),
+      verifiedBy: session.user.name || "Staff Editor",
+    },
+  });
+
+  revalidatePath("/feed");
+  revalidatePath("/editor");
+  revalidatePath("/articles");
   return { success: true };
 }
