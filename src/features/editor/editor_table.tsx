@@ -8,6 +8,7 @@ import {
   updateArticleStatusAction,
   deleteArticleAction,
 } from "@/features/articles/articles.actions";
+import { SelectDropdown, SelectOption } from "@/shared/ui/select_dropdown";
 import { Pin, Trash2, Edit, ExternalLink } from "lucide-react";
 import { ArticleStatus } from "@prisma/client";
 
@@ -22,6 +23,13 @@ interface ManagedArticle {
   createdAt: string;
   publishedAt: string | null;
 }
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: "DRAFT", label: "Draft" },
+  { value: "IN_REVIEW", label: "In Review" },
+  { value: "PUBLISHED", label: "Published" },
+  { value: "ARCHIVED", label: "Archived" },
+];
 
 interface EditorTableProps {
   articles: ManagedArticle[];
@@ -72,7 +80,7 @@ export function EditorTable({ articles }: EditorTableProps) {
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto min-h-[360px] pb-16">
         <table className="w-full text-left text-xs">
           <thead className="bg-[#fbfbfa] text-[#686d66] border-b border-black/6">
             <tr>
@@ -100,19 +108,16 @@ export function EditorTable({ articles }: EditorTableProps) {
                 </td>
 
                 <td className="p-3.5">
-                  <select
+                  <SelectDropdown
                     disabled={isPending}
+                    size="sm"
+                    className="w-32"
+                    options={STATUS_OPTIONS}
                     value={item.status}
-                    onChange={(e) =>
-                      handleStatusChange(item.id, e.target.value as ArticleStatus)
+                    onChange={(newStatus) =>
+                      handleStatusChange(item.id, newStatus as ArticleStatus)
                     }
-                    className="rounded-lg border border-black/10 bg-white px-2 py-1 text-xs font-medium text-[#20211f] focus:border-[#668c63] focus:outline-none"
-                  >
-                    <option value="DRAFT">Draft</option>
-                    <option value="IN_REVIEW">In Review</option>
-                    <option value="PUBLISHED">Published</option>
-                    <option value="ARCHIVED">Archived</option>
-                  </select>
+                  />
                 </td>
 
                 <td className="p-3.5 text-center">

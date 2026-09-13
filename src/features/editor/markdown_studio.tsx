@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { compileMarkdownToHtml } from "@/shared/lib/markdown";
 import { calculateReadTime } from "@/shared/lib/read_time";
 import { saveArticleAction } from "@/features/articles/articles.actions";
+import { SelectDropdown } from "@/shared/ui/select_dropdown";
 import { Clock, CheckCircle2, AlertCircle, FileText, Send, Save, Globe } from "lucide-react";
 
 interface DepartmentOption {
@@ -201,17 +202,14 @@ export function MarkdownStudio({
           <label className="text-xs font-semibold uppercase tracking-wider text-[#686d66]">
             Department *
           </label>
-          <select
+          <SelectDropdown
+            options={departments.map((dept) => ({
+              value: dept.id,
+              label: dept.name,
+            }))}
             value={departmentId}
-            onChange={(e) => setDepartmentId(e.target.value)}
-            className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-[#20211f] focus:border-[#668c63] focus:outline-none focus:ring-2 focus:ring-[#668c63]/20"
-          >
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id}>
-                {dept.name}
-              </option>
-            ))}
-          </select>
+            onChange={setDepartmentId}
+          />
         </div>
 
         <div className="md:col-span-12 space-y-1.5">
