@@ -17,6 +17,9 @@ npx tsc --noEmit
 echo "[*] Step 4: Verifying Next.js production build..."
 npm run build
 
+echo "[*] Step 5: Running PRD domain & anti-pattern test assertions..."
+npx tsx scripts/test_e2e_workflow.ts
+
 echo "=================================================="
 echo "[OK] All verification checks passed cleanly."
 echo "=================================================="

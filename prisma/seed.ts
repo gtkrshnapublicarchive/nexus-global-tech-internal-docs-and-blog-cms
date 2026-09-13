@@ -131,7 +131,7 @@ All event payloads are strictly governed by JSON Schema specifications version 7
     },
   });
 
-  const article2 = await prisma.article.upsert({
+  await prisma.article.upsert({
     where: { slug: "post-mortem-cache-invalidation-storm" },
     update: {
       title: "Post-Mortem: Incident 2026-08-22 Distributed Cache Invalidation Storm",
