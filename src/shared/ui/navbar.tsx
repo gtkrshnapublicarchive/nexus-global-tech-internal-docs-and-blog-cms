@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { BookOpen, Bookmark, PlusCircle, LogOut, ShieldCheck, User } from "lucide-react";
+import { BookOpen, Bookmark, PlusCircle } from "lucide-react";
+import { NavUserMenu } from "./nav_user_menu";
 
 interface NavbarProps {
   user: {
@@ -76,38 +76,7 @@ export function Navbar({ user }: NavbarProps) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-black/8 bg-[#fbfbfa] px-3 py-1.5">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#eef2ec] text-[#5a8357]">
-              {isEditor ? (
-                <ShieldCheck className="h-3.5 w-3.5" />
-              ) : (
-                <User className="h-3.5 w-3.5" />
-              )}
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold text-[#20211f] leading-tight">
-                {user.name ?? "Nexus Engineer"}
-              </span>
-              <div className="flex items-center gap-1 text-[10px] text-[#737870] leading-tight">
-                <span>{user.department ?? "Engineering"}</span>
-                <span>•</span>
-                <span className={isEditor ? "font-semibold text-[#5a8357]" : "text-[#737870]"}>
-                  {user.role === "EDITOR" ? "Editor" : "Reader"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            title="Sign Out"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/8 text-[#737870] transition hover:border-black/20 hover:bg-black/5 hover:text-[#20211f]"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+        <NavUserMenu user={user} />
       </div>
     </header>
   );
