@@ -6,7 +6,9 @@ import { compileMarkdownToHtml } from "@/shared/lib/markdown";
 import { calculateReadTime } from "@/shared/lib/read_time";
 import { saveArticleAction } from "@/features/articles/articles.actions";
 import { SelectDropdown } from "@/shared/ui/select_dropdown";
-import { Clock, CheckCircle2, AlertCircle, FileText, Send, Save, Globe } from "lucide-react";
+import { FeedbackAlert } from "@/shared/ui/feedback_alert";
+import { FormIssue, parseErrorMessage } from "@/shared/lib/format_error";
+import { Clock, FileText, Send, Save, Globe } from "lucide-react";
 
 interface DepartmentOption {
   id: string;
@@ -37,11 +39,10 @@ export function MarkdownStudio({
   const [title, setTitle] = useState(initialArticle?.title ?? "");
   const [excerpt, setExcerpt] = useState(initialArticle?.excerpt ?? "");
   const [content, setContent] = useState(
-    initialArticle?.content ??
-      "## Introduction\nStart drafting your technical documentation or RFC here using GitHub-flavored Markdown.\n\n### Implementation Details\n```typescript\n// Paste code blocks with syntax\n```"
+    initialArticle?.content ?? "## Technical Overview\n\nStart writing technical specs..."
   );
   const [departmentId, setDepartmentId] = useState(
-    initialArticle?.departmentId ?? departments[0]?.id ?? ""
+    initialArticle?.departmentId ?? (departments[0]?.id || "")
   );
   const [coverImageUrl, setCoverImageUrl] = useState(
     initialArticle?.coverImageUrl ?? ""
@@ -49,8 +50,21 @@ export function MarkdownStudio({
   const [isPinned, setIsPinned] = useState(initialArticle?.isPinned ?? false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
+    title?: string;
     message: string;
+    issues?: FormIssue[];
   } | null>(null);
+
+  const fieldErrors = useMemo(() => {
+    if (feedback?.type !== "error" || !feedback.issues) return {};
+    const map: Record<string, string> = {};
+    for (const issue of feedback.issues) {
+      if (issue.field && !map[issue.field]) {
+        map[issue.field] = issue.message;
+      }
+    }
+    return map;
+  }, [feedback]);
 
   const { minutes, wordCount } = useMemo(
     () => calculateReadTime(content),
@@ -64,7 +78,11 @@ export function MarkdownStudio({
     if (content.length > 50000) {
       setFeedback({
         type: "error",
+        title: "Content Too Long",
         message: "Article length exceeds the maximum limit of 50,000 characters.",
+        issues: [
+          { field: "content", message: "Content exceeds 50,000 characters" },
+        ],
       });
       return;
     }
@@ -83,8 +101,19 @@ export function MarkdownStudio({
         };
 
         const res = await saveArticleAction(payload);
+        if (!res.success) {
+          setFeedback({
+            type: "error",
+            title: "Validation Incomplete",
+            message: res.error || "Please review and correct the marked items.",
+            issues: res.issues || [],
+          });
+          return;
+        }
+
         setFeedback({
           type: "success",
+          title: "Article Saved",
           message: `Article successfully saved in ${targetStatus} state!`,
         });
 
@@ -94,12 +123,12 @@ export function MarkdownStudio({
           router.refresh();
         }
       } catch (err: unknown) {
+        const parsed = parseErrorMessage(err);
         setFeedback({
           type: "error",
-          message:
-            err instanceof Error
-              ? err.message
-              : "Failed to persist article. Please check all required fields.",
+          title: "Submission Issue",
+          message: parsed.summary,
+          issues: parsed.issues,
         });
       }
     });
@@ -166,20 +195,13 @@ export function MarkdownStudio({
 
       {/* Feedback Banner */}
       {feedback && (
-        <div
-          className={`flex items-center gap-2.5 rounded-xl p-3.5 text-xs ${
-            feedback.type === "success"
-              ? "border border-[#5a8357]/20 bg-[#e7f2e4] text-[#4c7649]"
-              : "border border-red-200 bg-red-50 text-red-700"
-          }`}
-        >
-          {feedback.type === "success" ? (
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#5a8357]" />
-          ) : (
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
-          )}
-          <span>{feedback.message}</span>
-        </div>
+        <FeedbackAlert
+          type={feedback.type}
+          title={feedback.title}
+          message={feedback.message}
+          issues={feedback.issues}
+          onDismiss={() => setFeedback(null)}
+        />
       )}
 
       {/* Metadata Configuration Box */}
@@ -192,10 +214,31 @@ export function MarkdownStudio({
             type="text"
             required
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (fieldErrors.title) {
+                setFeedback((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        issues: prev.issues?.filter((i) => i.field !== "title"),
+                      }
+                    : null
+                );
+              }
+            }}
             placeholder="e.g. RFC-106: Redis Cluster Failover Automation"
-            className="w-full rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-sm text-[#20211f] placeholder:text-[#a0a59e] focus:border-[#668c63] focus:outline-none focus:ring-2 focus:ring-[#668c63]/20"
+            className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-[#20211f] placeholder:text-[#a0a59e] focus:outline-none focus:ring-2 ${
+              fieldErrors.title
+                ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                : "border-black/10 focus:border-[#668c63] focus:ring-[#668c63]/20"
+            }`}
           />
+          {fieldErrors.title && (
+            <p className="text-[11px] font-medium text-red-600">
+              {fieldErrors.title}
+            </p>
+          )}
         </div>
 
         <div className="md:col-span-4 space-y-1.5">
@@ -219,10 +262,31 @@ export function MarkdownStudio({
           <textarea
             rows={2}
             value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
+            onChange={(e) => {
+              setExcerpt(e.target.value);
+              if (fieldErrors.excerpt) {
+                setFeedback((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        issues: prev.issues?.filter((i) => i.field !== "excerpt"),
+                      }
+                    : null
+                );
+              }
+            }}
             placeholder="A concise description rendered in the reader feed..."
-            className="w-full rounded-xl border border-black/10 bg-white px-3.5 py-2 text-sm text-[#20211f] placeholder:text-[#a0a59e] focus:border-[#668c63] focus:outline-none focus:ring-2 focus:ring-[#668c63]/20"
+            className={`w-full rounded-xl border bg-white px-3.5 py-2 text-sm text-[#20211f] placeholder:text-[#a0a59e] focus:outline-none focus:ring-2 ${
+              fieldErrors.excerpt
+                ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                : "border-black/10 focus:border-[#668c63] focus:ring-[#668c63]/20"
+            }`}
           />
+          {fieldErrors.excerpt && (
+            <p className="text-[11px] font-medium text-red-600">
+              {fieldErrors.excerpt}
+            </p>
+          )}
         </div>
 
         <div className="md:col-span-8 space-y-1.5">
@@ -266,11 +330,32 @@ export function MarkdownStudio({
 
           <textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              setContent(e.target.value);
+              if (fieldErrors.content) {
+                setFeedback((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        issues: prev.issues?.filter((i) => i.field !== "content"),
+                      }
+                    : null
+                );
+              }
+            }}
             rows={22}
-            className="w-full font-mono text-xs leading-relaxed text-[#20211f] bg-[#fbfbfa] p-4 rounded-xl border border-black/8 focus:border-[#668c63] focus:outline-none focus:ring-2 focus:ring-[#668c63]/20 resize-y"
+            className={`w-full font-mono text-xs leading-relaxed text-[#20211f] bg-[#fbfbfa] p-4 rounded-xl border focus:outline-none focus:ring-2 resize-y ${
+              fieldErrors.content
+                ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                : "border-black/8 focus:border-[#668c63] focus:ring-[#668c63]/20"
+            }`}
             placeholder="Write your markdown content..."
           />
+          {fieldErrors.content && (
+            <p className="mt-2 text-[11px] font-medium text-red-600">
+              {fieldErrors.content}
+            </p>
+          )}
         </div>
 
         {/* Right Pane: Live HTML Preview */}
